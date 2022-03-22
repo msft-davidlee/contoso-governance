@@ -164,14 +164,14 @@ resource allowedLocations 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-p
 }
 
 var stackName = '${prefix}${stackEnvironment}'
-// Configure Shared Azure Key Vault resource
+// Configure Shared resources such as Azure Key Vault resource
 resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
-  name: 'shared-key-vault'
+  name: 'shared-resources'
   kind: 'template'
   parent: blueprints[0]
   properties: {
-    description: 'Shared keyvault resource used to store any application specific secrets used in configurations'
-    displayName: 'Shared keyvault'
+    description: 'Shared resources used to store any application specific secrets used in configurations'
+    displayName: 'Shared resources'
     parameters: {}
     resourceGroup: 'ResourceGroup1'
     template: {
@@ -219,21 +219,77 @@ resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
             supportsHttpsTrafficOnly: true
             allowBlobPublicAccess: false
           }
+          resources: [
+            {
+              name: 'default/apps'
+              type: 'blobServices/containers'
+              apiVersion: '2021-08-01'
+              dependsOn: [
+                stackName
+              ]
+              properties: {
+                publicAccess: 'None'
+              }
+            }
+            {
+              name: 'default/certs'
+              type: 'blobServices/containers'
+              apiVersion: '2021-08-01'              
+              dependsOn: [
+                stackName
+              ]
+              properties: {
+                publicAccess: 'None'
+              }
+            }
+          ]
         }
         {
-          name: '${stackName}/default'
-          type: 'Microsoft.Storage/storageAccounts/blobServices'
-          apiVersion: '2021-08-01'
+          name: stackName
+          type: 'Microsoft.ContainerRegistry/registries'
+          apiVersion: '2021-06-01-preview'
+          location: location
+          tags: {
+            'stack-name': 'shared-container-registry'
+            'stack-environment': stackEnvironment
+            'stack-sub-name': 'shared-services'
+          }
+          sku: {
+            name: 'Basic'
+          }
+          properties: {
+            publicNetworkAccess: 'Enabled'
+            // Have to enable Admin user in order for Container Apps to access ACR.
+            adminUserEnabled: true
+            anonymousPullEnabled: false
+            policies: {
+              retentionPolicy: {
+                days: 3
+              }
+            }
+          }
         }
         {
-          name: '${stackName}/default/apps'
-          type: 'Microsoft.Storage/storageAccounts/blobServices/containers'
-          apiVersion: '2021-08-01'
-        }
-        {
-          name: '${stackName}/default/certs'
-          type: 'Microsoft.Storage/storageAccounts/blobServices/containers'
-          apiVersion: '2021-08-01'
+          name: stackName
+          type: 'Microsoft.AppConfiguration/configurationStores'
+          apiVersion: '2021-10-01-preview'
+          location: location
+          tags: {
+            'stack-name': 'shared-configuration'
+            'stack-environment': stackEnvironment
+            'stack-sub-name': 'shared-services'
+          }
+          sku: {
+            // Yes, it is strange that prod would be free, but since this is a demo, I like to
+            // use free for prod which is always there and standard for development because we
+            // can only have 1 free tier of app config.
+            name: (stackEnvironment == 'prod') ? 'free' : 'standard'
+          }
+          properties: {
+            disableLocalAuth: true
+            enablePurgeProtection: false
+            publicNetworkAccess: 'Enabled'
+          }
         }
       ]
     }
