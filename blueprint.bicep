@@ -201,6 +201,40 @@ resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
             tenantId: subscription().tenantId
           }
         }
+        {
+          name: stackName
+          type: 'Microsoft.Storage/storageAccounts'
+          apiVersion: '2021-02-01'
+          location: location
+          tags: {
+            'stack-name': 'shared-storage'
+            'stack-environment': stackEnvironment
+            'stack-sub-name': 'shared-services'
+          }
+          sku: {
+            name: 'Standard_LRS'
+          }
+          kind: 'StorageV2'
+          properties: {
+            supportsHttpsTrafficOnly: true
+            allowBlobPublicAccess: false
+          }
+        }
+        {
+          name: '${stackName}/default'
+          type: 'Microsoft.Storage/storageAccounts/blobServices'
+          apiVersion: '2021-08-01'
+        }
+        {
+          name: '${stackName}/default/apps'
+          type: 'Microsoft.Storage/storageAccounts/blobServices/containers'
+          apiVersion: '2021-08-01'
+        }
+        {
+          name: '${stackName}/default/certs'
+          type: 'Microsoft.Storage/storageAccounts/blobServices/containers'
+          apiVersion: '2021-08-01'
+        }
       ]
     }
   }
