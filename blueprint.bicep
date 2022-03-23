@@ -147,6 +147,21 @@ resource myResourceGroupRoleKeyVaultSecretsOfficerRoleAssignment 'Microsoft.Blue
   }
 }
 
+var appConfigDataReader = '/providers/Microsoft.Authorization/roleDefinitions/516239f1-63e1-4d78-a4de-a74fb236a071'
+resource spAppConfigDataReaderRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
+  name: 'shared-services-appconfigreader'
+  kind: 'roleAssignment'
+  parent: blueprints[0]
+  properties: {
+    displayName: 'Service Principal : App Configuration Data Reader'
+    principalIds: [
+      svcPrincipalId
+    ]
+    resourceGroup: 'ResourceGroup1'
+    roleDefinitionId: appConfigDataReader
+  }
+}
+
 // Well-know policy defination: e56962a6-4747-49cd-b67b-bf8b01975c4c - Allowed locations
 resource allowedLocations 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
   name: 'sub-not-allowed-location'
@@ -326,9 +341,9 @@ resource usersDefs 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview'
           apiVersion: '2018-11-30'
           location: location
           tags: {
-            'stack-name': 'platform'
+            'stack-name': 'identity'
             'stack-environment': stackEnvironment
-            'stack-sub-name': 'identity'
+            'stack-sub-name': 'platform'
           }
         }
       ]
