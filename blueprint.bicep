@@ -22,6 +22,7 @@ var rgs = [
       'stack-sub-name': 'shared-services'
     }
     createManagedIdentity: false
+    allResourcesDoNotDeleteInDev: false
   }
   {
     name: 'networking'
@@ -31,6 +32,7 @@ var rgs = [
       'stack-sub-name': 'networking'
     }
     createManagedIdentity: false
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'ais'
@@ -40,6 +42,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'aks'
@@ -49,6 +52,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'apim'
@@ -58,6 +62,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'appservice'
@@ -67,6 +72,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'asev3'
@@ -76,6 +82,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'staticweb'
@@ -85,6 +92,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
 ]
 
@@ -164,14 +172,14 @@ resource allowedLocations 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-p
 }
 
 var stackName = '${prefix}${stackEnvironment}'
-// Configure Shared Azure Key Vault resource
+// Configure Shared resources such as Azure Key Vault resource
 resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
-  name: 'shared-key-vault'
+  name: 'shared-resources'
   kind: 'template'
   parent: blueprints[0]
   properties: {
-    description: 'Shared keyvault resource used to store any application specific secrets used in configurations'
-    displayName: 'Shared keyvault'
+    description: 'Shared resources used to store any application specific secrets used in configurations'
+    displayName: 'Shared resources'
     parameters: {}
     resourceGroup: 'ResourceGroup1'
     template: {
@@ -199,6 +207,96 @@ resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
             enabledForTemplateDeployment: true
             enablePurgeProtection: true
             tenantId: subscription().tenantId
+          }
+        }
+        {
+          name: stackName
+          type: 'Microsoft.Storage/storageAccounts'
+          apiVersion: '2021-02-01'
+          location: location
+          tags: {
+            'stack-name': 'shared-storage'
+            'stack-environment': stackEnvironment
+            'stack-sub-name': 'shared-services'
+          }
+          sku: {
+            name: 'Standard_LRS'
+          }
+          kind: 'StorageV2'
+          properties: {
+            supportsHttpsTrafficOnly: true
+            allowBlobPublicAccess: false
+          }
+          resources: [
+            {
+              name: 'default/apps'
+              type: 'blobServices/containers'
+              apiVersion: '2021-08-01'
+              dependsOn: [
+                stackName
+              ]
+              properties: {
+                publicAccess: 'None'
+              }
+            }
+            {
+              name: 'default/certs'
+              type: 'blobServices/containers'
+              apiVersion: '2021-08-01'
+              dependsOn: [
+                stackName
+              ]
+              properties: {
+                publicAccess: 'None'
+              }
+            }
+          ]
+        }
+        {
+          name: stackName
+          type: 'Microsoft.ContainerRegistry/registries'
+          apiVersion: '2021-06-01-preview'
+          location: location
+          tags: {
+            'stack-name': 'shared-container-registry'
+            'stack-environment': stackEnvironment
+            'stack-sub-name': 'shared-services'
+          }
+          sku: {
+            name: 'Basic'
+          }
+          properties: {
+            publicNetworkAccess: 'Enabled'
+            // Have to enable Admin user in order for Container Apps to access ACR.
+            adminUserEnabled: true
+            anonymousPullEnabled: false
+            policies: {
+              retentionPolicy: {
+                days: 3
+              }
+            }
+          }
+        }
+        {
+          name: stackName
+          type: 'Microsoft.AppConfiguration/configurationStores'
+          apiVersion: '2021-10-01-preview'
+          location: location
+          tags: {
+            'stack-name': 'shared-configuration'
+            'stack-environment': stackEnvironment
+            'stack-sub-name': 'shared-services'
+          }
+          sku: {
+            // Yes, it is strange that prod would be free, but since this is a demo, I like to
+            // use free for prod which is always there and standard for development because we
+            // can only have 1 free tier of app config.
+            name: (stackEnvironment == 'prod') ? 'free' : 'standard'
+          }
+          properties: {
+            disableLocalAuth: true
+            enablePurgeProtection: false
+            publicNetworkAccess: 'Enabled'
           }
         }
       ]
@@ -240,4 +338,5 @@ resource usersDefs 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview'
 
 output blueprints array = [for i in range(0, length(rgs)): {
   name: blueprints[i].name
+  allResourcesDoNotDeleteInDev: rgs[i].allResourcesDoNotDeleteInDev
 }]
