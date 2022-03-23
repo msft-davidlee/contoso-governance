@@ -22,6 +22,7 @@ var rgs = [
       'stack-sub-name': 'shared-services'
     }
     createManagedIdentity: false
+    allResourcesDoNotDeleteInDev: false
   }
   {
     name: 'networking'
@@ -31,6 +32,7 @@ var rgs = [
       'stack-sub-name': 'networking'
     }
     createManagedIdentity: false
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'ais'
@@ -40,6 +42,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'aks'
@@ -49,6 +52,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'apim'
@@ -58,6 +62,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'appservice'
@@ -67,6 +72,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'asev3'
@@ -76,6 +82,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
   {
     name: 'staticweb'
@@ -85,6 +92,7 @@ var rgs = [
       'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
+    allResourcesDoNotDeleteInDev: true
   }
 ]
 
@@ -234,7 +242,7 @@ resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
             {
               name: 'default/certs'
               type: 'blobServices/containers'
-              apiVersion: '2021-08-01'              
+              apiVersion: '2021-08-01'
               dependsOn: [
                 stackName
               ]
@@ -330,4 +338,5 @@ resource usersDefs 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview'
 
 output blueprints array = [for i in range(0, length(rgs)): {
   name: blueprints[i].name
+  allResourcesDoNotDeleteInDev: rgs[i].allResourcesDoNotDeleteInDev
 }]

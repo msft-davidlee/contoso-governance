@@ -82,9 +82,22 @@ $outputs.properties.outputs.blueprints.value | ForEach-Object {
 
     $assignmentName = "assign-$blueprintName-$appliedVersion"
 
+    if ($BUILD_ENV -eq "dev") {
+        if ($_.allResourcesDoNotDeleteInDev) {
+            $lockMode = "AllResourcesDoNotDelete"
+        }
+        else {
+            $lockMode = "None"
+        }
+    }
+    else {
+        $lockMode = "AllResourcesDoNotDelete"
+    }
+   
+
     az blueprint assignment create --subscription $subscriptionId --name $assignmentName `
         --location centralus --identity-type SystemAssigned --blueprint-version $blueprintId `
-        --parameters "{}" --locks-mode AllResourcesDoNotDelete
+        --parameters "{}" --locks-mode $lockMode
 
     if ($LastExitCode -ne 0) {
         throw "An error has occured. Assignment failed."
