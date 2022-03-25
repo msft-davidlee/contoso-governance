@@ -47,7 +47,7 @@ var rgs = [
   {
     name: 'aks'
     tags: {
-      'stack-name': 'ais'
+      'stack-name': 'aks'
       'stack-environment': stackEnvironment
       'stack-sub-name': 'demo'
     }
@@ -144,6 +144,21 @@ resource myResourceGroupRoleKeyVaultSecretsOfficerRoleAssignment 'Microsoft.Blue
     ]
     resourceGroup: 'ResourceGroup1'
     roleDefinitionId: keyVaultSecretsOfficer
+  }
+}
+
+var keyVaultSecretsUser = '/providers/Microsoft.Authorization/roleDefinitions/4633458b-17de-408a-b874-0445c86b69e6'
+resource spResourceGroupRoleKeyVaultSecretsUserRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
+  name: 'shared-services-kv-secretsuser'
+  kind: 'roleAssignment'
+  parent: blueprints[0]
+  properties: {
+    displayName: 'Service Principal : Key Vault Secrets User'
+    principalIds: [
+      svcPrincipalId
+    ]
+    resourceGroup: 'ResourceGroup1'
+    roleDefinitionId: keyVaultSecretsUser
   }
 }
 
