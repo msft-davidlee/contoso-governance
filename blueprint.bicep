@@ -177,6 +177,22 @@ resource spAppConfigDataReaderRoleAssignment 'Microsoft.Blueprint/blueprints/art
   }
 }
 
+// This is needed because there is a script to configure route table on application gateway subnet and it needs to read 
+// the route table created in the aks node rg.
+// Assignment is on Subscription level.
+var networkContributor = '/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7'
+resource spNetworkContributorRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
+  name: 'subscription-network-contributor'
+  parent: blueprints[0]
+  kind: 'roleAssignment'
+  properties: {
+    principalIds: [
+      svcPrincipalId
+    ]
+    roleDefinitionId: networkContributor
+  }
+}
+
 // Well-know policy defination: e56962a6-4747-49cd-b67b-bf8b01975c4c - Allowed locations
 resource allowedLocations 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
   name: 'sub-not-allowed-location'
