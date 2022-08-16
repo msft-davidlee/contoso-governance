@@ -26,6 +26,17 @@ var rgs = [
     skipInDev: true
   }
   {
+    // Personal rg is created only in Prod and stores your personal storage account for Cloud Shell.
+    name: 'personal'
+    tags: {
+      'stack-name': 'personal'
+      'stack-environment': stackEnvironment
+    }
+    createManagedIdentity: false
+    allResourcesDoNotDeleteInDev: false
+    skipInDev: true
+  }
+  {
     name: 'networking'
     tags: {
       'stack-name': 'networking'
@@ -221,7 +232,7 @@ resource allowedLocations 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-p
 var stackName = '${prefix}${stackEnvironment}'
 // Configure Shared resources such as Azure Key Vault resource - This will be created in production and the single instances will be shared in Dev and Prod.
 // to save cost.
-resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
+resource sharedServices 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
   name: 'shared-resources'
   kind: 'template'
   parent: blueprints[0]
@@ -339,6 +350,53 @@ resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
             enablePurgeProtection: false
             publicNetworkAccess: 'Enabled'
           }
+        }
+      ]
+    }
+  }
+}
+
+resource personal 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
+  name: 'personal-resources'
+  kind: 'template'
+  parent: blueprints[1]
+  properties: {
+    description: 'Personal resources only for things like CloudShell'
+    displayName: 'Personal resources'
+    parameters: {}
+    resourceGroup: 'ResourceGroup1'
+    template: {
+      '$schema': 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#'
+      contentVersion: '1.0.0.0'
+      parameters: {}
+      resources: [
+        {
+          name: '${stackName}cs'
+          type: 'Microsoft.Storage/storageAccounts'
+          apiVersion: '2021-02-01'
+          location: location
+          tags: {
+            'stack-name': 'personal-storage'
+            'stack-environment': stackEnvironment
+          }
+          sku: {
+            name: 'Standard_LRS'
+          }
+          kind: 'StorageV2'
+          properties: {
+            supportsHttpsTrafficOnly: true
+            allowBlobPublicAccess: false
+          }
+          resources: [
+            {
+              name: 'default'
+              type: 'fileServices/containers'
+              apiVersion: '2021-09-01'
+              dependsOn: [
+                stackName
+              ]
+            }
+          ]
         }
       ]
     }
