@@ -15,89 +15,90 @@ targetScope = 'subscription'
 // All resources created by the blueprint should use this tag.
 var rgs = [
   {
+    // Shared services is not created in Dev. We intend for Dev apps to leverage Prod shared services
     name: 'shared-services'
     tags: {
-      'stack-name': 'platform'
+      'stack-name': 'shared-services'
       'stack-environment': stackEnvironment
-      'stack-sub-name': 'shared-services'
     }
     createManagedIdentity: false
     allResourcesDoNotDeleteInDev: false
+    skipInDev: true
   }
   {
     name: 'networking'
     tags: {
-      'stack-name': 'platform'
+      'stack-name': 'networking'
       'stack-environment': stackEnvironment
-      'stack-sub-name': 'networking'
     }
     createManagedIdentity: false
     allResourcesDoNotDeleteInDev: true
+    skipInDev: false
   }
   {
     name: 'ais'
     tags: {
       'stack-name': 'ais'
       'stack-environment': stackEnvironment
-      'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
     allResourcesDoNotDeleteInDev: true
+    skipInDev: false
   }
   {
     name: 'aks'
     tags: {
       'stack-name': 'aks'
       'stack-environment': stackEnvironment
-      'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
     allResourcesDoNotDeleteInDev: true
+    skipInDev: false
   }
   {
     name: 'apim'
     tags: {
       'stack-name': 'apim'
       'stack-environment': stackEnvironment
-      'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
     allResourcesDoNotDeleteInDev: true
+    skipInDev: false
   }
   {
     name: 'appservice'
     tags: {
       'stack-name': 'appservice'
       'stack-environment': stackEnvironment
-      'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
     allResourcesDoNotDeleteInDev: true
+    skipInDev: false
   }
   {
     name: 'asev3'
     tags: {
       'stack-name': 'asev3'
       'stack-environment': stackEnvironment
-      'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
     allResourcesDoNotDeleteInDev: true
+    skipInDev: false
   }
   {
     name: 'staticweb'
     tags: {
       'stack-name': 'staticweb'
       'stack-environment': stackEnvironment
-      'stack-sub-name': 'demo'
     }
     createManagedIdentity: true
     allResourcesDoNotDeleteInDev: true
+    skipInDev: false
   }
 ]
 
 // It would be great to use the same blueprint and we should, but it doesn't seem that we can create a loop
-resource blueprints 'Microsoft.Blueprint/blueprints@2018-11-01-preview' = [for (rg, i) in rgs: {
+resource blueprints 'Microsoft.Blueprint/blueprints@2018-11-01-preview' = [for (rg, i) in rgs: if (stackEnvironment == 'prod' || (stackEnvironment == 'dev' && !rg.skipInDev)) {
   name: '${blueprintName}${rg.name}'
   properties: {
     description: '${blueprintName} ${rg.name} blueprint'
@@ -118,7 +119,7 @@ resource blueprints 'Microsoft.Blueprint/blueprints@2018-11-01-preview' = [for (
 }]
 
 var contributorRoleIdRes = '/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c'
-resource spResourceGroupContributorRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = [for (rg, i) in rgs: {
+resource spResourceGroupContributorRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = [for (rg, i) in rgs: if (stackEnvironment == 'prod' || (stackEnvironment == 'dev' && !rg.skipInDev)) {
   name: '${rg.name}-contribitor'
   kind: 'roleAssignment'
   parent: blueprints[i]
@@ -133,7 +134,7 @@ resource spResourceGroupContributorRoleAssignment 'Microsoft.Blueprint/blueprint
 }]
 
 var keyVaultSecretsOfficer = '/providers/Microsoft.Authorization/roleDefinitions/b86a8fe4-44ce-4948-aee5-eccb2c155cd7'
-resource myResourceGroupRoleKeyVaultSecretsOfficerRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
+resource myResourceGroupRoleKeyVaultSecretsOfficerRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
   name: 'shared-services-kv-secrets'
   kind: 'roleAssignment'
   parent: blueprints[0]
@@ -148,7 +149,7 @@ resource myResourceGroupRoleKeyVaultSecretsOfficerRoleAssignment 'Microsoft.Blue
 }
 
 var keyVaultSecretsUser = '/providers/Microsoft.Authorization/roleDefinitions/4633458b-17de-408a-b874-0445c86b69e6'
-resource spResourceGroupRoleKeyVaultSecretsUserRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
+resource spResourceGroupRoleKeyVaultSecretsUserRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
   name: 'shared-services-kv-secretsuser'
   kind: 'roleAssignment'
   parent: blueprints[0]
@@ -163,7 +164,7 @@ resource spResourceGroupRoleKeyVaultSecretsUserRoleAssignment 'Microsoft.Bluepri
 }
 
 var appConfigDataReader = '/providers/Microsoft.Authorization/roleDefinitions/516239f1-63e1-4d78-a4de-a74fb236a071'
-resource spAppConfigDataReaderRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
+resource spAppConfigDataReaderRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
   name: 'shared-services-appconfigreader'
   kind: 'roleAssignment'
   parent: blueprints[0]
@@ -181,7 +182,7 @@ resource spAppConfigDataReaderRoleAssignment 'Microsoft.Blueprint/blueprints/art
 // the route table created in the aks node rg.
 // Assignment is on Subscription level.
 var networkContributor = '/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7'
-resource spNetworkContributorRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
+resource spNetworkContributorRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
   name: 'subscription-network-contributor'
   parent: blueprints[0]
   kind: 'roleAssignment'
@@ -194,7 +195,7 @@ resource spNetworkContributorRoleAssignment 'Microsoft.Blueprint/blueprints/arti
 }
 
 // Well-know policy defination: e56962a6-4747-49cd-b67b-bf8b01975c4c - Allowed locations
-resource allowedLocations 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
+resource allowedLocations 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
   name: 'sub-not-allowed-location'
   kind: 'policyAssignment'
   parent: blueprints[0]
@@ -218,8 +219,9 @@ resource allowedLocations 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-p
 }
 
 var stackName = '${prefix}${stackEnvironment}'
-// Configure Shared resources such as Azure Key Vault resource
-resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = {
+// Configure Shared resources such as Azure Key Vault resource - This will be created in production and the single instances will be shared in Dev and Prod.
+// to save cost.
+resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
   name: 'shared-resources'
   kind: 'template'
   parent: blueprints[0]
@@ -241,7 +243,6 @@ resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
           tags: {
             'stack-name': 'shared-key-vault'
             'stack-environment': stackEnvironment
-            'stack-sub-name': 'shared-services'
           }
           properties: {
             sku: {
@@ -263,7 +264,6 @@ resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
           tags: {
             'stack-name': 'shared-storage'
             'stack-environment': stackEnvironment
-            'stack-sub-name': 'shared-services'
           }
           sku: {
             name: 'Standard_LRS'
@@ -306,7 +306,6 @@ resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
           tags: {
             'stack-name': 'shared-container-registry'
             'stack-environment': stackEnvironment
-            'stack-sub-name': 'shared-services'
           }
           sku: {
             name: 'Basic'
@@ -331,13 +330,9 @@ resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
           tags: {
             'stack-name': 'shared-configuration'
             'stack-environment': stackEnvironment
-            'stack-sub-name': 'shared-services'
           }
           sku: {
-            // Yes, it is strange that prod would be free, but since this is a demo, I like to
-            // use free for prod which is always there and standard for development because we
-            // can only have 1 free tier of app config.
-            name: (stackEnvironment == 'prod') ? 'free' : 'standard'
+            name: 'free'
           }
           properties: {
             disableLocalAuth: true
@@ -352,7 +347,7 @@ resource sharedKeyVault 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
 
 // Configure user identities to represents apps hosted in each of the resource group that
 // can be used to access Shared resources like Key Vault.
-resource usersDefs 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = [for (rg, i) in rgs: if (rg.createManagedIdentity) {
+resource usersDefs 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = [for (rg, i) in rgs: if ((rg.createManagedIdentity && stackEnvironment == 'prod') || (rg.createManagedIdentity && stackEnvironment == 'dev' && !rg.skipInDev)) {
   kind: 'template'
   name: rg.name
   parent: blueprints[i]
@@ -374,7 +369,6 @@ resource usersDefs 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview'
           tags: {
             'stack-name': 'identity'
             'stack-environment': stackEnvironment
-            'stack-sub-name': 'platform'
           }
         }
       ]

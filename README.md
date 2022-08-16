@@ -4,12 +4,12 @@ The information contained in this README.md file and any accompanying materials 
 # Introduction
 This project demostrates the use of Azure Blueprint to manage resource groups, managed identities and use of role assignments to a shared Azure Key Vault resource.
 
-We will be using GitHub as our code repository so you should create a Service Principal in AAD so we can assign this SP the role of Contributor in each of the Resource Group so it can create resources. You should also pass in your Principal Id so we can assign you rights to shared resources such as Azure Key Vault. Note that you need to have rights for role assignments in your Subscription.
+We will be using GitHub as our code repository so we will create a Service Principal named GitHub in AAD so we can assign this SP the role of Contributor in each of the Resource Group so it can create resources. You will use your Principal Id so we can assign you rights to shared resources such as Azure Key Vault. Note that you need to have rights for role assignments in your Subscription.
 
 Use the following command in your local Azure CLI or CloudShell to run the Azure Blueprint deployment.
 
 ```
-.\DeployBlueprint.ps1 -BUILD_ENV prod -SVC_PRINCIPAL_ID <GitHub Service Principal> -MY_PRINCIPAL_ID <Your Service Principal Id> -PREFIX <See naming convention below>
+.\DeployBlueprint.ps1 -BUILD_ENV <Env either prod or dev> -PREFIX <See naming convention below>
 ```
 
 If you need to rollback, run the following command.
