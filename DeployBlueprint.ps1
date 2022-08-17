@@ -4,13 +4,12 @@
 # 1. Versioning is built into the script and you can add a switch to indicate a major or minor change.
 # 2. Change notes is based on last git change log.
 
-# Suggested Prefix convention first name initial, last name initial, workload type like pla and a number begin with 01
-# So, John Doe would be jdpla01 and you would manually "increment" your last number. This is because services like
-# Azure KeyVault which is soft-deleted cannot be easily recreated quickly and you need a different unique name.
+# Suggested Prefix convention first name initial, last name initial, workload type like platform which can be 
+# abbreviated as pl and a number begin with 01. So, John Doe would be jdpla01 and you would manually 
+# "increment" your last number. This is because services like Azure KeyVault which is soft-deleted cannot be 
+# easily recreated quickly and you need a different unique name.
 param(
     [Parameter(Mandatory = $true)][string]$BUILD_ENV,
-    [Parameter(Mandatory = $true)][string]$SVC_PRINCIPAL_ID,
-    [Parameter(Mandatory = $true)][string]$MY_PRINCIPAL_ID,
     [Parameter(Mandatory = $true)][string]$PREFIX,
     [switch]$Major,
     [switch]$Minor)
@@ -18,21 +17,47 @@ param(
    
 $ErrorActionPreference = "Stop"
 
+$spName = "GitHub"
+$spList = az ad sp list --show-mine | ConvertFrom-Json
+$result = $spList | Where-Object { $_.appDisplayName -eq $spName }
+if ($result.Length -eq 0) {
+
+    $subId = az account show --query id -o tsv
+
+    # Minimally, we should assign a role so this SP is valid in this subscription.
+    $result = az ad sp create-for-rbac -n $spName --scopes "/subscriptions/$subId" --role reader | ConvertFrom-Json
+    if ($LastExitCode -ne 0) {
+        throw "An error has occured. Unable to create service principal."
+    }
+}
+
+$SVC_PRINCIPAL_ID = az ad sp show --id $result.appId --query id --output tsv
+if ($LastExitCode -ne 0) {
+    throw "An error has occured. Unable to get service principal object id."
+}
+
+$MY_PRINCIPAL_ID = az ad signed-in-user show --query id --output tsv
+if ($LastExitCode -ne 0) {
+    throw "An error has occured. Signed-in user query failed."
+}
+
 if (((az extension list | ConvertFrom-Json) | Where-Object { $_.name -eq "blueprint" }).Length -eq 0) {
     az extension add --upgrade -n blueprint    
 }
 
-$blueprintName = "contoso$BUILD_ENV"
+$mgmtId = "contoso"
+$blueprintName = "$mgmtId$BUILD_ENV"
 
 $subscriptionId = (az account show --query id --output tsv)
 if ($LastExitCode -ne 0) {
     throw "An error has occured. Subscription id query failed."
 }
 
-$outputs = (az deployment sub create --name "deploy-$blueprintName-blueprint" --location 'centralus' --template-file blueprint.bicep `
+$deploymentSuffix = (Get-Date).ToString("yyyyMMddhhmmss") 
+$outputs = (az deployment sub create --name "$blueprintName-$deploymentSuffix" --location 'centralus' --template-file blueprint.bicep `
         --subscription $subscriptionId `
         --parameters stackEnvironment=$BUILD_ENV svcPrincipalId=$SVC_PRINCIPAL_ID myPrincipalId=$MY_PRINCIPAL_ID `
-        blueprintName=$blueprintName prefix=$PREFIX | ConvertFrom-Json)
+        blueprintName=$blueprintName prefix=$PREFIX mgmtId=$mgmtId | ConvertFrom-Json)
 
 if ($LastExitCode -ne 0) {
     throw "An error has occured. Deployment failed."
@@ -40,8 +65,18 @@ if ($LastExitCode -ne 0) {
 
 $msg = (git log --oneline -n 1)
 
-$outputs.properties.outputs.blueprints.value | ForEach-Object {
+$values = $outputs.properties.outputs.blueprints.value
+
+foreach ($_ in $values) {
     $blueprintName = $_.name
+    $skipInDev = $_.skipInDev
+
+    if ($skipInDev -and $BUILD_ENV -eq "dev") {
+        Write-Host "Skipped $blueprintName"
+        continue
+    }
+
+    Write-Host "Publishing $blueprintName"
 
     $versions = (az blueprint version list --blueprint-name $blueprintName | ConvertFrom-Json)
     if ($LastExitCode -ne 0) {
@@ -109,29 +144,31 @@ $outputs.properties.outputs.blueprints.value | ForEach-Object {
     }
 }
 
-# This portion of the script handles the role assignments between the managed identities and shared resources.
-$ids = az identity list | ConvertFrom-Json
-if ($LastExitCode -ne 0) {
-    throw "An error has occured. Identity listing failed."
-}
+if ($BUILD_ENV -eq 'prod') {
 
-$platformRes = (az resource list --tag stack-name='shared-key-vault' | ConvertFrom-Json)
-if (!$platformRes) {
-    throw "Unable to find eligible platform resource!"
-}
-
-if ($platformRes.Length -eq 0) {
-    throw "Unable to find 'ANY' eligible platform resource!"
-}
-
-# Platform specific Azure Key Vault as a Shared resource
-$akvid = ($platformRes | Where-Object { $_.type -eq 'Microsoft.KeyVault/vaults' -and $_.tags.'stack-environment' -eq $BUILD_ENV }).id
-
-$ids | ForEach-Object {
-
-    $id = $_
-    az role assignment create --assignee $id.principalId --role 'Key Vault Secrets User' --scope $akvid
+    # This portion of the script handles the role assignments between the managed identities and shared resources.
+    $ids = az identity list | ConvertFrom-Json
     if ($LastExitCode -ne 0) {
-        throw "An error has occured on role assignment."
+        throw "An error has occured. Identity listing failed."
+    }
+
+    $platformRes = (az resource list --tag stack-name='shared-key-vault' | ConvertFrom-Json)
+    if (!$platformRes) {
+        throw "Unable to find eligible platform resource!"
+    }
+    
+    if ($platformRes.Length -eq 0) {
+        throw "Unable to find 'ANY' eligible platform resource!"
+    }
+    
+    # Platform specific Azure Key Vault as a Shared resource
+    $akvid = ($platformRes | Where-Object { $_.type -eq 'Microsoft.KeyVault/vaults' -and $_.tags.'stack-environment' -eq $BUILD_ENV }).id
+    
+    $ids | ForEach-Object {
+        $id = $_
+        az role assignment create --assignee $id.principalId --role 'Key Vault Secrets User' --scope $akvid
+        if ($LastExitCode -ne 0) {
+            throw "An error has occured on role assignment."
+        }
     }
 }
