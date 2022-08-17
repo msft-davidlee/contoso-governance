@@ -8,6 +8,7 @@ param svcPrincipalId string
 param myPrincipalId string
 param blueprintName string
 param prefix string
+param mgmtId string
 
 // Configure Azure Blueprint Bicep on the Subscription level.
 targetScope = 'subscription'
@@ -18,6 +19,7 @@ var rgs = [
     // Shared services is not created in Dev. We intend for Dev apps to leverage Prod shared services
     name: 'shared-services'
     tags: {
+      'mgmt-id': mgmtId
       'stack-name': 'shared-services'
       'stack-environment': stackEnvironment
     }
@@ -29,6 +31,7 @@ var rgs = [
     // Personal rg is created only in Prod and stores your personal storage account for Cloud Shell.
     name: 'personal'
     tags: {
+      'mgmt-id': mgmtId
       'stack-name': 'personal'
       'stack-environment': stackEnvironment
     }
@@ -39,6 +42,7 @@ var rgs = [
   {
     name: 'networking'
     tags: {
+      'mgmt-id': mgmtId
       'stack-name': 'networking'
       'stack-environment': stackEnvironment
     }
@@ -49,6 +53,7 @@ var rgs = [
   {
     name: 'ais'
     tags: {
+      'mgmt-id': mgmtId
       'stack-name': 'ais'
       'stack-environment': stackEnvironment
     }
@@ -59,6 +64,7 @@ var rgs = [
   {
     name: 'aks'
     tags: {
+      'mgmt-id': mgmtId
       'stack-name': 'aks'
       'stack-environment': stackEnvironment
     }
@@ -69,6 +75,7 @@ var rgs = [
   {
     name: 'apim'
     tags: {
+      'mgmt-id': mgmtId
       'stack-name': 'apim'
       'stack-environment': stackEnvironment
     }
@@ -79,6 +86,7 @@ var rgs = [
   {
     name: 'appservice'
     tags: {
+      'mgmt-id': mgmtId
       'stack-name': 'appservice'
       'stack-environment': stackEnvironment
     }
@@ -89,6 +97,7 @@ var rgs = [
   {
     name: 'asev3'
     tags: {
+      'mgmt-id': mgmtId
       'stack-name': 'asev3'
       'stack-environment': stackEnvironment
     }
@@ -99,6 +108,7 @@ var rgs = [
   {
     name: 'staticweb'
     tags: {
+      'mgmt-id': mgmtId
       'stack-name': 'staticweb'
       'stack-environment': stackEnvironment
     }
@@ -252,6 +262,7 @@ resource sharedServices 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
           apiVersion: '2021-11-01-preview'
           location: location
           tags: {
+            'mgmt-id': mgmtId
             'stack-name': 'shared-key-vault'
             'stack-environment': stackEnvironment
           }
@@ -273,6 +284,7 @@ resource sharedServices 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
           apiVersion: '2021-02-01'
           location: location
           tags: {
+            'mgmt-id': mgmtId
             'stack-name': 'shared-storage'
             'stack-environment': stackEnvironment
           }
@@ -339,6 +351,7 @@ resource sharedServices 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
           apiVersion: '2021-10-01-preview'
           location: location
           tags: {
+            'mgmt-id': mgmtId
             'stack-name': 'shared-configuration'
             'stack-environment': stackEnvironment
           }
@@ -356,6 +369,7 @@ resource sharedServices 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-pre
   }
 }
 
+var personalStackName = '${stackName}cs'
 resource personal 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
   name: 'personal-resources'
   kind: 'template'
@@ -371,11 +385,12 @@ resource personal 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' 
       parameters: {}
       resources: [
         {
-          name: '${stackName}cs'
+          name: personalStackName
           type: 'Microsoft.Storage/storageAccounts'
           apiVersion: '2021-02-01'
           location: location
           tags: {
+            'mgmt-id': mgmtId
             'stack-name': 'personal-storage'
             'stack-environment': stackEnvironment
           }
@@ -389,12 +404,17 @@ resource personal 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' 
           }
           resources: [
             {
-              name: 'default'
-              type: 'fileServices/containers'
+              name: 'default/cloudshell'
+              type: 'fileServices/shares'
               apiVersion: '2021-09-01'
               dependsOn: [
-                stackName
+                personalStackName
               ]
+              properties: {
+                accessTier: 'TransactionOptimized'
+                shareQuota: 6
+                enabledProtocols: 'SMB'
+              }
             }
           ]
         }
@@ -425,6 +445,7 @@ resource usersDefs 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview'
           apiVersion: '2018-11-30'
           location: location
           tags: {
+            'mgmt-id': mgmtId
             'stack-name': 'identity'
             'stack-environment': stackEnvironment
           }
@@ -437,4 +458,5 @@ resource usersDefs 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview'
 output blueprints array = [for i in range(0, length(rgs)): {
   name: blueprints[i].name
   allResourcesDoNotDeleteInDev: rgs[i].allResourcesDoNotDeleteInDev
+  skipInDev: rgs[i].skipInDev
 }]

@@ -45,7 +45,8 @@ if (((az extension list | ConvertFrom-Json) | Where-Object { $_.name -eq "bluepr
     az extension add --upgrade -n blueprint    
 }
 
-$blueprintName = "contoso$BUILD_ENV"
+$mgmtId = "contoso"
+$blueprintName = "$mgmtId$BUILD_ENV"
 
 $subscriptionId = (az account show --query id --output tsv)
 if ($LastExitCode -ne 0) {
@@ -53,10 +54,10 @@ if ($LastExitCode -ne 0) {
 }
 
 $deploymentSuffix = (Get-Date).ToString("yyyyMMddhhmmss") 
-$outputs = (az deployment sub create --name "deploy-$blueprintName-$deploymentSuffix" --location 'centralus' --template-file blueprint.bicep `
+$outputs = (az deployment sub create --name "$blueprintName-$deploymentSuffix" --location 'centralus' --template-file blueprint.bicep `
         --subscription $subscriptionId `
         --parameters stackEnvironment=$BUILD_ENV svcPrincipalId=$SVC_PRINCIPAL_ID myPrincipalId=$MY_PRINCIPAL_ID `
-        blueprintName=$blueprintName prefix=$PREFIX | ConvertFrom-Json)
+        blueprintName=$blueprintName prefix=$PREFIX mgmtId=$mgmtId | ConvertFrom-Json)
 
 if ($LastExitCode -ne 0) {
     throw "An error has occured. Deployment failed."
@@ -68,8 +69,9 @@ $values = $outputs.properties.outputs.blueprints.value
 
 foreach ($_ in $values) {
     $blueprintName = $_.name
+    $skipInDev = $_.skipInDev
 
-    if ($blueprintName.Contains("contosodevshared") -and $BUILD_ENV -eq "dev") {
+    if ($skipInDev -and $BUILD_ENV -eq "dev") {
         Write-Host "Skipped $blueprintName"
         continue
     }
