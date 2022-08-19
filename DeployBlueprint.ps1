@@ -4,18 +4,30 @@
 # 1. Versioning is built into the script and you can add a switch to indicate a major or minor change.
 # 2. Change notes is based on last git change log.
 
-# Suggested Prefix convention first name initial, last name initial, workload type like platform which can be 
-# abbreviated as pl and a number begin with 01. So, John Doe would be jdpla01 and you would manually 
-# "increment" your last number. This is because services like Azure KeyVault which is soft-deleted cannot be 
-# easily recreated quickly and you need a different unique name.
 param(
     [Parameter(Mandatory = $true)][string]$BUILD_ENV,
-    [Parameter(Mandatory = $true)][string]$PREFIX,
+    [Parameter(Mandatory = $false)][string]$PREFIX,
     [switch]$Major,
     [switch]$Minor)
 
    
 $ErrorActionPreference = "Stop"
+
+$mgmtId = "contoso"
+
+$groups = az group list | ConvertFrom-Json
+if ($groups.Length -gt 0) {
+    $foundGroup = $groups | Where-Object { $_.tags.'stack-environment' -eq $BUILD_ENV -and $_.tags.'mgmt-id' -eq "contoso" -and $_.tags.'stack-name' -eq "shared-services" }
+
+    if ($foundGroup) {
+        $PREFIX = $foundGroup.tags."mgmt-prefix"
+        Write-Host "Overriding prefix with existing value stored in resource group: $PREFIX"
+    }
+}
+
+if (!$PREFIX) {
+    throw "Please configure a prefix!"
+}
 
 $spName = "GitHub"
 $spList = az ad sp list --show-mine | ConvertFrom-Json
@@ -45,7 +57,7 @@ if (((az extension list | ConvertFrom-Json) | Where-Object { $_.name -eq "bluepr
     az extension add --upgrade -n blueprint    
 }
 
-$mgmtId = "contoso"
+
 $blueprintName = "$mgmtId$BUILD_ENV"
 
 $subscriptionId = (az account show --query id --output tsv)
