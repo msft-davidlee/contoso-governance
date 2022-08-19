@@ -22,6 +22,7 @@ var rgs = [
       'mgmt-id': mgmtId
       'stack-name': 'shared-services'
       'stack-environment': stackEnvironment
+      'mgmt-prefix': prefix
     }
     createManagedIdentity: false
     allResourcesDoNotDeleteInDev: false
@@ -181,6 +182,21 @@ resource spResourceGroupRoleKeyVaultSecretsUserRoleAssignment 'Microsoft.Bluepri
     ]
     resourceGroup: 'ResourceGroup1'
     roleDefinitionId: keyVaultSecretsUser
+  }
+}
+
+var appConfigDataOwner = '/providers/Microsoft.Authorization/roleDefinitions/5ae67dd6-50cb-40e7-96ff-dc2bfa4b606b'
+resource myAppConfigDataOwnerRoleAssignment 'Microsoft.Blueprint/blueprints/artifacts@2018-11-01-preview' = if (stackEnvironment == 'prod') {
+  name: 'shared-services-appconfigowner'
+  kind: 'roleAssignment'
+  parent: blueprints[0]
+  properties: {
+    displayName: 'My User : App Configuration Data Owner'
+    principalIds: [
+      myPrincipalId
+    ]
+    resourceGroup: 'ResourceGroup1'
+    roleDefinitionId: appConfigDataOwner
   }
 }
 
