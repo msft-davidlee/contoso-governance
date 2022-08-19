@@ -41,7 +41,7 @@ Once you have deployed the dev and prod Azure Blueprints in your Azure Subscript
 
 Be sure to use existing storage account which has been created for you.
 
-![Create Cloud Shell](/docs/UseExisting.png)
+![Use existing storage](/docs/UseExisting.png)
 
 ## Have an issue?
 You are welcome to create an issue if you need help but please note that there is no timeline to answer or resolve any issues you have with the contents of this project. Use the contents of this project at your own risk! If you are interested to volunteer to maintain this, please feel free to reach out to be added as a contributor and send Pull Requests (PR).
