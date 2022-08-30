@@ -4,6 +4,8 @@ The information contained in this README.md file and any accompanying materials 
 # Introduction
 This project demostrates the use of Azure Blueprint to manage resource groups, managed identities and use of role assignments to a shared resources such as Azure Key Vault. The target audience is for those who have a single Azure Subscription they want to manage. If you want to maintain a consistent set of resources and resource groups, you can modify the blueprint.bicep file which defines them (as infra-as-code). For managing multiple Azure Subscriptions, refer to [Azure Landing Zone](https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/).
 
+Note that Azure Blueprint is currently in preview.
+
 ## Tagging Standards
 1. All resource groups and resources will have a tag of mgmt-id which represents the management id. This is hardcoded to be contoso and indicates that these are specifically managed by this blueprint in this repo we are executing here.
 2. All resource groups and resources will have a tag of stack-name which represents the type of workload it belongs to. We have several demos such as App Services and AKS.
