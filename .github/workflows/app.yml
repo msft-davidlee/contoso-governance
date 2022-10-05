@@ -27,7 +27,7 @@ jobs:
         id: deploy
         uses: azure/arm-deploy@v1
         with:
-          deploymentName: 'deploy-${{ needs.setup.outputs.build_env }}-${{ github.run_number }}'
+          deploymentName: 'deploy-${{ github.run_number }}'
           resourceGroupName: ${{ steps.resolve-shared-resources.outputs.appResourceGroup }}
           template: ./deployment/shared-services.bicep
           parameters: >
