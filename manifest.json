@@ -1,0 +1,125 @@
+{
+  "resource-group-location": "centralus",
+  "managed-identity": {
+    "resource-group-name": "ard",
+    "name": "ard-managed-identity"
+  },
+  "unique-resources": [
+    {
+      "name": "shared-key-vault",
+      "ard-resource-id": "shared-key-vault",
+      "resource-group-names": [
+        "shared-services"
+      ],
+      "resource-type": "Microsoft.KeyVault/vaults"
+    },
+    {
+      "name": "shared-container-registry",
+      "ard-resource-id": "shared-container-registry",
+      "resource-group-names": [
+        "shared-services"
+      ],
+      "resource-type": "Microsoft.ContainerRegistry/registries"
+    },
+    {
+      "name": "shared-app-configuration",
+      "ard-resource-id": "shared-app-configuration",
+      "resource-group-names": [
+        "shared-services"
+      ],
+      "resource-type": "Microsoft.AppConfiguration/configurationStores"
+    },
+    {
+      "name": "shared-storage",
+      "ard-resource-id": "shared-storage",
+      "resource-group-names": [
+        "shared-services"
+      ],
+      "resource-type": "Microsoft.Storage/storageAccounts"
+    },
+    {
+      "name": "personal",
+      "ard-resource-id": "personal-cloud-shell",
+      "resource-group-names": [
+        "personal"
+      ],
+      "resource-type": "Microsoft.Storage/storageAccounts"
+    },
+    {
+      "name": "vnet-pri",
+      "ard-resource-id": "vnet-pri",
+      "resource-group-names": [
+        "networking-dev-pri",
+        "networking-prod-pri"
+      ],
+      "resource-type": "Microsoft.Network/virtualNetworks"
+    },
+    {
+      "name": "vnet-dr",
+      "ard-resource-id": "vnet-dr",
+      "resource-group-names": [
+        "networking-dev-dr",
+        "networking-prod-dr"
+      ],
+      "resource-type": "Microsoft.Network/virtualNetworks"
+    }
+  ],
+  "group-resources": [
+    {
+      "name": "app-service-demo-dev",
+      "resource-group-names": [
+        "app-service-dev"
+      ],
+      "ard-solution-id": "app-service-demo",
+      "ard-environment": "dev"
+    },
+    {
+      "name": "app-service-demo-prod",
+      "resource-group-names": [
+        "app-service-prod"
+      ],
+      "ard-solution-id": "app-service-demo",
+      "ard-environment": "prod"
+    },
+    {
+      "name": "networking-dev-dr",
+      "resource-group-names": [
+        "networking-dev-dr"
+      ],
+      "ard-solution-id": "networking-dr",
+      "ard-environment": "dev"
+    },
+    {
+      "name": "networking-prod-dr",
+      "resource-group-names": [
+        "networking-prod-dr"
+      ],
+      "ard-solution-id": "networking-dr",
+      "ard-environment": "prod"
+    },
+    {
+      "name": "networking-dev-pri",
+      "resource-group-names": [
+        "networking-dev-pri"
+      ],
+      "ard-solution-id": "networking-pri",
+      "ard-environment": "dev"
+    },
+    {
+      "name": "networking-prod-pri",
+      "resource-group-names": [
+        "networking-prod-pri"
+      ],
+      "ard-solution-id": "networking-pri",
+      "ard-environment": "prod"
+    },
+    {
+      "name": "shared-services",
+      "resource-group-names": [
+        "shared-services"
+      ],
+      "ard-solution-id": "shared-services",
+      "ard-environment": "prod"
+    }
+  ]
+}
