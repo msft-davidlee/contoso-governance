@@ -23,7 +23,7 @@ jobs:
         run: |
           .\ResolveSharedResources.ps1
 
-      - name: Build shared services
+      - name: Deploy shared services
         id: deploy
         uses: azure/arm-deploy@v1
         with:
