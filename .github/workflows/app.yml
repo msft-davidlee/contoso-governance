@@ -21,7 +21,7 @@ jobs:
         name: Resolve shared resources
         working-directory: .\deployment
         run: |
-          .\Deployment\ResolveSharedResources.ps1
+          .\ResolveSharedResources.ps1
 
       - name: Build shared services
         id: deploy
