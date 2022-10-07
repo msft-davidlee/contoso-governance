@@ -8,7 +8,7 @@ The information contained in this README.md file and any accompanying materials 
 
 Welcome to the landing page for all contoso-`*` respos located in the msft-davidlee organization. This repo is specifically used to create all dependent resources so that we can create those workloads. We are making use of the idea of [Azure Resource Discovery or ARD](https://github.com/msft-davidlee/azure-resource-discovery) to manage resource groups and specific resource tagging so that we can easily lookup dependent resources during code deployment against those workloads. Refer to the manifest.json file for more information on the resource groups we are creating. Please note that everything we demo around the contoso-`*` revolves around a single Azure Subscription.
 
-For governance around multiple Azure Subscriptions, please refer to [Azure Landing Zone](https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/).
+Note that this setup we have here is because we are have created several different types of workloads for the purpose of demonstrating Azure capabilities and we are specifically targeting a single Azure Subscription. For governance around multiple Azure Subscriptions, please refer to [Azure Landing Zone](https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/ready/landing-zone/).
 
 ## Get Started
 
