@@ -24,11 +24,21 @@ jobs:
           .\ResolveSharedResources.ps1
 
       - name: Deploy shared services
-        id: deploy
+        id: deploysharedservices
         uses: azure/arm-deploy@v1
         with:
-          deploymentName: 'deploy-${{ github.run_number }}'
+          deploymentName: 'shared-services-${{ github.run_number }}'
           resourceGroupName: ${{ steps.resolve-shared-resources.outputs.appResourceGroup }}
           template: ./deployment/shared-services.bicep
+          parameters: >
+            prefix=${{ secrets.PREFIX }}
+
+      - name: Deploy personal
+        id: deploypersonal
+        uses: azure/arm-deploy@v1
+        with:
+          deploymentName: 'personal-${{ github.run_number }}'
+          resourceGroupName: ${{ steps.resolve-shared-resources.outputs.personalResourceGroup }}
+          template: ./deployment/personal.bicep
           parameters: >
             prefix=${{ secrets.PREFIX }}
