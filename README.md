@@ -20,13 +20,15 @@ Note that this setup we have here is because we are have created several differe
 4. Clone the [ARD repo](https://github.com/msft-davidlee/azure-resource-discovery) locally.
 5. Run the following command within the ARD repo root directory against your local manifest file. Be sure to change the REPO_PATH to the correct one. ``` .\Apply.ps1 -ManifestFilePath "C:\REPO_PATH\manifest.json" ```
 6. If all goes well, you should see resource groups created in your Azure Subscription as specified in the manifest.json file with Azure Policies applied for resource tagging.
-7. Next, we need to create managed identity which can be used later in the other workloads. Run the following in the root directory ``` .\EnableSharedManagedIdentity.ps1 ```
-8. This repo is already configured to execute a GitHub workflow to create shared resources as defined in the shared-services.bicep file. We can manually kick it off or make a small change it and commit so as to trigger a GitHub workflow.
-9. When this is done, in the shared-services resource group, you should see shared resources such as Key Vault created.
+7. Run a script to assign the service principal you have created with Contributor access to all the resource groups. ``` .\AssignServicePrincipal.ps1 -SpDisplayName "REPLACE_WITH_SP_NAME" ```
+8. Next, we need to create managed identity which can be used later in the other workloads. Run the following in the root directory ``` .\EnableSharedManagedIdentity.ps1 ```
+9. This repo is already configured to execute a GitHub workflow to create shared resources as defined in the shared-services.bicep file. We can manually kick it off or make a small change it and commit so as to trigger a GitHub workflow.
+10. When this is done, in the shared-services resource group, you should see shared resources such as Key Vault created.
+11. You should also see a storage account created in personal resource group. This is your cloudshell specific storage account. Update the app.yaml under .github\workflows directory if you do not intend to use it so it will not be created. Follow this [step](https://learn.microsoft.com/en-us/azure/cloud-shell/persisting-shell-storage#use-existing-resources) to associate your cloudshell storage.
 
 ### AZURE_CREDENTIALS
 
-In order to connect to your Azure Subscription to create the shared resources, we will need to create a service principal in Azure Active Directory. Create a Service Principal named GitHub in AAD so we can assign this SP the role of Contributor in each of the Resource Group so it can create resources. You will use your Principal Id so we can assign you rights to shared resources such as Azure Key Vault. Note that you need to have rights for role assignments in your Subscription.
+In order to connect to your Azure Subscription to create the shared resources, we will need to create a service principal in Azure Active Directory. Create a Service Principal in AAD so we can assign this SP the role of Contributor in each of the Resource Group so it can create resources. You will use your Principal Id so we can assign you rights to shared resources such as Azure Key Vault. Note that you need to have rights for role assignments in your Subscription.
 
 ```json
 {

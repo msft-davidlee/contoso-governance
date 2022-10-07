@@ -120,6 +120,14 @@
       ],
       "ard-solution-id": "shared-services",
       "ard-environment": "prod"
+    },
+    {
+      "name": "personal",
+      "resource-group-names": [
+        "personal"
+      ],
+      "ard-solution-id": "personal",
+      "ard-environment": "prod"
     }
   ]
 }
