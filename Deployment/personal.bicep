@@ -39,13 +39,6 @@ resource str_default 'Microsoft.Storage/storageAccounts/fileServices@2022-05-01'
   parent: str
   name: 'default'
   properties: {
-    cors: {
-      corsRules: []
-    }
-    protocolSettings: {
-      smb: {
-      }
-    }
     shareDeleteRetentionPolicy: {
       days: 7
       enabled: true
