@@ -66,6 +66,22 @@
   ],
   "group-resources": [
     {
+      "name": "aks-demo-dev",
+      "resource-group-names": [
+        "aks-dev"
+      ],
+      "ard-solution-id": "aks-demo",
+      "ard-environment": "dev"
+    },
+    {
+      "name": "aks-demo-prod",
+      "resource-group-names": [
+        "aks-prod"
+      ],
+      "ard-solution-id": "aks-demo",
+      "ard-environment": "prod"
+    },    
+    {
       "name": "app-service-demo-dev",
       "resource-group-names": [
         "app-service-dev"

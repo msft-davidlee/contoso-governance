@@ -2,6 +2,7 @@ on:
   push:
     paths-ignore:
       - 'README.md'
+      - 'manifest.json'
 
 jobs:
   cd_deploy:
