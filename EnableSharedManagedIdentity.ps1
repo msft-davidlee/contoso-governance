@@ -11,7 +11,7 @@ if (!$kv) {
 
 $sharedResourceGroup = $kv.resourceGroup
 
-$mid = (az identity list -g $sharedResourceGroup | ConvertFrom-Json).id
+$mid = (az identity list -g $sharedResourceGroup | ConvertFrom-Json)
 if ($LastExitCode -ne 0) {
     throw "An error has occured. An error occured when getting managed identity from rg."
 }
@@ -28,5 +28,14 @@ if (!$mid) {
 
     if ($LastExitCode -ne 0) {        
         throw "An error has occured. Unable to create $miName."
+    }
+}
+
+$aksGroups = az group list --tag ard-solution-id=aks-demo | ConvertFrom-Json  
+$aksGroups | ForEach-Object {
+    $scope = $_.id
+    az role assignment create --assignee $mid.principalId --role "Contributor" --scope $scope
+    if ($LastExitCode -ne 0) {        
+        throw "An error has occured. Unable to create assignment to $scope."
     }
 }
