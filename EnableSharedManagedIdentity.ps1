@@ -39,3 +39,12 @@ $aksGroups | ForEach-Object {
         throw "An error has occured. Unable to create assignment to $scope."
     }
 }
+
+$networkGroups = az group list --tag ard-solution-id=networking-pri | ConvertFrom-Json
+$networkGroups| ForEach-Object {
+    $scope = $_.id
+    az role assignment create --assignee $mid.principalId --role "Network Contributor" --scope $scope
+    if ($LastExitCode -ne 0) {        
+        throw "An error has occured. Unable to create assignment to $scope."
+    }
+}
